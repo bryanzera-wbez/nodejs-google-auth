@@ -1,0 +1,28 @@
+{
+  "name": "nodejs-google-auth",
+  "version": "1.0.0",
+  "description": "Express-based app with CPM google auth built in",
+  "main": "app.js",
+  "dependencies": {
+    "config": "^1.25.1",
+    "cookie-parser": "^1.4.3",
+    "express": "^4.15.2",
+    "express-session": "^1.15.2",
+    "passport": "^0.3.2",
+    "passport-google-oauth": "^1.0.0",
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bryanzera-wbez/nodejs-google-auth.git"
+  },
+  "author": "Bryan Zera",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/bryanzera-wbez/nodejs-google-auth/issues"
+  },
+  "homepage": "https://github.com/bryanzera-wbez/nodejs-google-auth#readme"
+}
