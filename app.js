@@ -18,8 +18,6 @@ app.use(cookieParser());
 passport.serializeUser(function(user, done) { done(null, user); });
 passport.deserializeUser(function(user, done) { done(null, user); });
 
-console.log("CALLBAKC URL", config.get('server.baseUrl') + config.get('googleStrategy.callbackPath'));
-
 // Configure Google strategy
 passport.use(new GoogleStrategy({
         clientID: config.get('googleStrategy.clientId'),
@@ -31,9 +29,8 @@ passport.use(new GoogleStrategy({
             if (!profile._json.domain || profile._json.domain != config.get('googleStrategy.limitToDomain')) {
                 done("Wrong domain", null);
             }
-        } else {
-            done(false, profile);
         }
+        done(false, profile);
     }
 ));
 
