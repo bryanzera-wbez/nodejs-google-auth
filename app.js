@@ -6,109 +6,50 @@ var session = require('express-session');
 var cookieParser = require('cookie-parser');
 var passport = require('passport');
 var GoogleStrategy = require('passport-google-oauth').OAuth2Strategy;
+var restrictPath = require('./restrict-path').restrictPath;
+var config = require('config');
 
-app.use(session({
-    cookie: {
-        maxAge: 525600,
-        name: 'nightmarefuel'
-    },
-    secret: 'nightmarefuel'}));
-
+// Configure sessions, passport
+app.use(session(config.get('session')));
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(cookieParser());
 
-// Use the GoogleStrategy within Passport.
-//   Strategies in Passport require a `verify` function, which accept
-//   credentials (in this case, an accessToken, refreshToken, and Google
-//   profile), and invoke a callback with a user object.
+passport.serializeUser(function(user, done) { done(null, user); });
+passport.deserializeUser(function(user, done) { done(null, user); });
 
+console.log("CALLBAKC URL", config.get('server.baseUrl') + config.get('googleStrategy.callbackPath'));
+
+// Configure Google strategy
 passport.use(new GoogleStrategy({
-        clientID: '436101420902-st1bnc8v0vag2gg0htvb6mgfhp5mhbfj.apps.googleusercontent.com',
-        clientSecret: 'j0v6gQdVSvlztuSywWQBFp09',
-        callbackURL: "http://slimy-mule-3633.vagrantshare.com/auth/google/callback"
+        clientID: config.get('googleStrategy.clientId'),
+        clientSecret: config.get('googleStrategy.clientSecret'),
+        callbackURL: config.get('server.baseUrl') + config.get('googleStrategy.callbackPath')
     },
     function(accessToken, refreshToken, profile, done) {
-        if (!profile._json.domain || profile._json.domain != "chicagopublicradio.org") {
-            done("Wrong domain", null)
+        if (config.has('googleStrategy.limitToDomain')) {
+            if (!profile._json.domain || profile._json.domain != config.get('googleStrategy.limitToDomain')) {
+                done("Wrong domain", null);
+            }
         } else {
             done(false, profile);
         }
     }
 ));
 
-passport.serializeUser(function(user, done) {
-    done(null, user);
-});
-
-passport.deserializeUser(function(user, done) {
-    done(null, user);
-});
-
-var restrict = function (req, res, next) {
-
-    console.log("RESTRICTING ON ", req.originalUrl);
-
-    if (req.isAuthenticated()) {
-        console.log("REQUEST AUTHENTICATED");
-        return next();
-    } else {
-        console.log("REQUEST NOT AUTHENTICATED");
-        res.redirect("/auth?redirectUrl=" + req.originalUrl);
-    }
-
-};
+// Add authorization routes
+app.use('/auth', require('./routes/auth'));
 
 
-// Route to set return URL in session
-app.get('/auth', function(req, res, next) {
 
-    console.log("GENERIC AUTH SHORTCUT");
-    console.log("REQUESTED FROM", req.query.redirectUrl);
-
-    req.session.loginRedirect = req.query.redirectUrl;
-
-    // begin external authentication
-    res.redirect('/auth/google');
-
-});
-
-// Generic route to start OAUTH2 login
-app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
-
-// Callback Route for OAUTH2
-app.get('/auth/google/callback',
-    passport.authenticate('google', {
-        scope: ['profile', 'email'],
-        failureRedirect: '/login',
-    }),
-    function(req, res) {
-        console.log("SUCCESSFUL RETURN FROM AUTHENTICATOR");
-        if (req.session.loginRedirect) {
-            console.log("SESSION REDIRECT SET:", req.session.loginRedirect);
-            var tmp = req.session.loginRedirect;
-            delete req.session.loginRedirect;
-            res.redirect(tmp);
-        } else {
-            console.log("SESSION REDIRECTING HOME");
-            res.redirect('/');
-        }
-    }
-);
 
 // General, Unprotected Route.
-app.get('/', function (req, res) {
-  res.send('Hello World!');
-});
+app.get('/', function (req, res) { res.send('Public Path'); });
 
-app.get('/secure', restrict, function(req, res) {
-    res.send("If you see this, you're authorized");
-});
+// secure route
+app.get('/secure', restrictPath, function(req, res) { res.send("Secure Path"); });
 
-app.get('/secure2', restrict, function(req, res) {
-    res.send("Second secure endpoint")
-});
-
+// Start server
 app.listen(3000, function () {
-  console.log('Example app listening on port 3000!');
+  console.log('Server running on 3000!');
 });
