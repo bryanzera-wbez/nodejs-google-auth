@@ -1,12 +1,12 @@
 var express = require('express'),
     router = express.Router(),
-    passport = require('passport');
+    passport = require('passport'),
+    config = require('config');
 
 // Route to set return URL in session
 router.get('/', function(req, res, next) {
 
-    console.log("GENERIC AUTH SHORTCUT");
-    console.log("REQUESTED FROM", req.query.redirectUrl);
+    if (config.get('debug')) { console.log("REQUESTED FROM", req.query.redirectUrl); }
 
     req.session.loginRedirect = req.query.redirectUrl;
 
@@ -25,14 +25,14 @@ router.get('/google/callback',
         failureRedirect: '/auth',
     }),
     function(req, res) {
-        console.log("SUCCESSFUL RETURN FROM AUTHENTICATOR");
+        if (config.get('debug')) { console.log("SUCCESSFUL RETURN FROM AUTHENTICATOR"); }
         if (req.session.loginRedirect) {
-            console.log("SESSION REDIRECT SET:", req.session.loginRedirect);
+            if (config.get('debug')) { console.log("SESSION REDIRECT SET:", req.session.loginRedirect); }
             var tmp = req.session.loginRedirect;
             delete req.session.loginRedirect;
             res.redirect(tmp);
         } else {
-            console.log("SESSION REDIRECTING HOME");
+            if (config.get('debug')) { console.log("SESSION REDIRECTING HOME"); }
             res.redirect('/');
         }
     }
